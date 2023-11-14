@@ -4,11 +4,12 @@ export function actionButtons() {
   return Markup.keyboard(
     [
       Markup.button.callback("📄 Tasks", "list"),
-      Markup.button.callback("✏️ Edit task", "edit"),
-      Markup.button.callback("❌ Delete task", "delete"),
+      Markup.button.callback("✅ Complete", "done"),
+      Markup.button.callback("✏️ Edit", "edit"),
+      Markup.button.callback("❌ Delete", "delete"),
     ],
     {
-      columns: 1,
+      columns: 2,
     }
-  );
+  ).resize();
 }
