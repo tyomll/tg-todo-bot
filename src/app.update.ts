@@ -13,24 +13,6 @@ import { actionButtons } from "./app.button";
 import { Context } from "./context.interface";
 import { showList } from "./app.utils";
 
-const todos = [
-  {
-    id: 1,
-    name: "Buy goods",
-    isCompleted: false,
-  },
-  {
-    id: 2,
-    name: "Walk",
-    isCompleted: false,
-  },
-  {
-    id: 3,
-    name: "Travel",
-    isCompleted: true,
-  },
-];
-
 @Update()
 export class AppUpdate {
   constructor(
@@ -44,8 +26,15 @@ export class AppUpdate {
     await context.reply("What do you want to do?", actionButtons());
   }
 
+  @Hears("📌 Create Task")
+  async createTask(context: Context) {
+    context.session.type = "create";
+    await context.reply("Name the task: ");
+  }
+
   @Hears("📄 Tasks")
   async getAll(context: Context) {
+    const todos = await this.appService.getAll();
     await context.reply(showList(todos));
   }
 
@@ -74,40 +63,43 @@ export class AppUpdate {
   async getMessage(@Message("text") message: string, @Ctx() context: Context) {
     if (!context.session.type) return;
 
+    if (context.session.type === "create") {
+      const todos = await this.appService.createTask(message);
+      await context.reply(showList(todos));
+    }
+
     if (context.session.type === "done") {
-      const todo = todos.find((todo) => todo.id === Number(message));
-      if (!todo) {
+      const todos = await this.appService.completeTask(Number(message));
+
+      if (!todos) {
         await context.reply("Task with ID not found!");
         return;
       }
 
-      todo.isCompleted = !todo.isCompleted;
       await context.reply(showList(todos));
     }
 
     if (context.session.type === "edit") {
       const [taskID, taskName] = message.split("|");
 
-      const todo = todos.find((todo) => todo.id === Number(taskID));
+      const todos = await this.appService.editTask(Number(taskID), taskName);
 
-      if (!todo) {
+      if (!todos) {
         await context.reply("Task with ID not found!");
         return;
       }
 
-      todo.name = taskName;
       await context.reply(showList(todos));
     }
 
     if (context.session.type === "delete") {
-      const todo = todos.find((todo) => todo.id === Number(message));
+      const todos = await this.appService.deleteTask(Number(message));
 
-      if (!todo) {
+      if (!todos) {
         await context.reply("Task with ID not found!");
         return;
       }
 
-      todo.isCompleted = !todo.isCompleted;
       await context.reply(
         showList(todos.filter((todo) => todo.id != Number(message)))
       );
